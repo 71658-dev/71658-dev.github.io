@@ -47,9 +47,6 @@
             <button id="tab-express-btn" class="tab-btn flex-1 text-center py-3 px-4 font-semibold text-gray-600 border-b-4 border-transparent transition hover:bg-gray-50" data-tab="express">
                 國內快捷
             </button>
-            <button id="tab-box-btn" class="tab-btn flex-1 text-center py-3 px-4 font-semibold text-gray-600 border-b-4 border-transparent transition hover:bg-gray-50" data-tab="box">
-                便利箱/袋
-            </button>
         </div>
 
         <!-- Tab 內容：國內函件 -->
@@ -122,17 +119,7 @@
         </div>
 
         <!-- Tab 內容：便利箱/袋 -->
-        <div id="tab-box" class="tab-content">
-            <p class="text-sm text-gray-600 mb-4">不分本、外地、外島，全區單一價格，已含郵資。</p>
-            <ul class="space-y-2 text-gray-700">
-                <li class="flex justify-between p-2 rounded-md bg-gray-50"><span>小型便利箱 (box5)</span> <span class="font-medium">65 元</span></li>
-                <li class="flex justify-between p-2 rounded-md bg-gray-50"><span>長形便利箱 (box1)</span> <span class="font-medium">80 元</span></li>
-                <li class="flex justify-between p-2 rounded-md bg-gray-50"><span>方形便利箱 (box2)</span> <span class="font-medium">80 元</span></li>
-                <li class="flex justify-between p-2 rounded-md bg-gray-50"><span>長柱型便利箱 (box4)</span> <span class="font-medium">80 元</span></li>
-                <li class="flex justify-between p-2 rounded-md bg-gray-50"><span>90公分便利箱 (box3)</span> <span class="font-medium">110 元</span></li>
-                <li class="flex justify-between p-2 rounded-md bg-gray-50"><span>便利袋 (bag1)</span> <span class="font-medium">65 元</span></li>
-            </ul>
-        </div>
+        <!-- REMOVED: "便利箱/袋" tab content has been removed -->
 
         <!-- 結果顯示區 -->
         <div id="result-area" class="mt-6 p-6 bg-blue-50 rounded-lg text-center hidden">
@@ -209,8 +196,7 @@
                 // 更新費率日期說明
                 const rateDates = {
                     mail: '（國內函件費率：民國108年11月1日）',
-                    express: '（國內快捷費率：民國110年3月24日）',
-                    box: '（便利箱/袋售價：民國110年3月24日）'
+                    express: '（國內快捷費率：民國110年3月24日）'
                 };
                 rateDateText.textContent = rateDates[tabId] || '';
                 rateDateText.classList.toggle('hidden', !rateDates[tabId]);
