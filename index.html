@@ -41,10 +41,10 @@
 
         <!-- Tab 按鈕 -->
         <div class="flex border-b border-gray-200 mb-6">
-            <button id="tab-mail-btn" class="tab-btn active flex-1 text-center py-3 px-4 font-semibold text-gray-600 border-b-4 border-transparent transition hover:bg-gray-50" data-tab="mail">
+            <button id="tab-mail-btn" class="tab-btn active flex-1 text-center py-3 px-4 font-semibold text-gray-600 border-b-4 border-transparent transition " data-tab="mail">
                 國內函件
             </button>
-            <button id="tab-express-btn" class="tab-btn flex-1 text-center py-3 px-4 font-semibold text-gray-600 border-b-4 border-transparent transition hover:bg-gray-50" data-tab="express">
+            <button id="tab-express-btn" class="tab-btn flex-1 text-center py-3 px-4 font-semibold text-gray-600 border-b-4 border-transparent transition " data-tab="express">
                 國內快捷
             </button>
         </div>
@@ -57,13 +57,13 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <input type="radio" id="mail-type-letter" name="mail-type-radio" value="letter" class="hidden peer" checked>
-                            <label for="mail-type-letter" class="block w-full text-center p-3 border border-gray-300 rounded-md cursor-pointer transition hover:bg-gray-50 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600">
+                            <label for="mail-type-letter" class="block w-full text-center p-3 border border-gray-300 rounded-md cursor-pointer transition  peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600">
                                 信函
                             </label>
                         </div>
                         <div>
                             <input type="radio" id="mail-type-printed" name="mail-type-radio" value="printed" class="hidden peer">
-                            <label for="mail-type-printed" class="block w-full text-center p-3 border border-gray-300 rounded-md cursor-pointer transition hover:bg-gray-50 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600">
+                            <label for="mail-type-printed" class="block w-full text-center p-3 border border-gray-300 rounded-md cursor-pointer transition  peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600">
                                 印刷物
                             </label>
                         </div>
@@ -76,12 +76,12 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">郵寄方式</label>
                     <div class="grid grid-cols-3 gap-4">
-                        <button class="mail-option-btn border border-gray-300 p-3 rounded-md text-center hover:bg-gray-50 transition" data-type="ordinary">普通</button>
-                        <button class="mail-option-btn border border-gray-300 p-3 rounded-md text-center hover:bg-gray-50 transition" data-type="prompt">限時</button>
-                        <button class="mail-option-btn border border-gray-300 p-3 rounded-md text-center hover:bg-gray-50 transition" data-type="registered">掛號</button>
-                        <button class="mail-option-btn border border-gray-300 p-3 rounded-md text-center hover:bg-gray-50 transition" data-type="prompt-registered">限時掛號</button>
-                        <button class="mail-option-btn border border-gray-300 p-3 rounded-md text-center hover:bg-gray-50 transition" data-type="registered-receipt">掛號附回執</button>
-                        <button class="mail-option-btn border border-gray-300 p-3 rounded-md text-center hover:bg-gray-50 transition" data-type="prompt-registered-receipt">限時掛號附回執</button>
+                        <button class="mail-option-btn border border-gray-300 p-3 rounded-md text-center  transition" data-type="ordinary">普通</button>
+                        <button class="mail-option-btn border border-gray-300 p-3 rounded-md text-center  transition" data-type="prompt">限時</button>
+                        <button class="mail-option-btn border border-gray-300 p-3 rounded-md text-center  transition" data-type="registered">掛號</button>
+                        <button class="mail-option-btn border border-gray-300 p-3 rounded-md text-center  transition" data-type="prompt-registered">限時掛號</button>
+                        <button class="mail-option-btn border border-gray-300 p-3 rounded-md text-center  transition" data-type="registered-receipt">掛號附回執</button>
+                        <button class="mail-option-btn border border-gray-300 p-3 rounded-md text-center  transition" data-type="prompt-registered-receipt">限時掛號附回執</button>
                     </div>
                 </div>
             </div>
@@ -97,20 +97,20 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">寄送方式</label>
                     <div class="grid grid-cols-2 gap-4">
-                        <button class="express-delivery-btn border border-gray-300 p-3 rounded-md text-center hover:bg-gray-50 transition active" data-delivery="delivery">宅配</button>
-                        <button class="express-delivery-btn border border-gray-300 p-3 rounded-md text-center hover:bg-gray-50 transition" data-delivery="pickup">i 箱/自郵領件</button>
+                        <button class="express-delivery-btn border border-gray-300 p-3 rounded-md text-center  transition active" data-delivery="delivery">宅配</button>
+                        <button class="express-delivery-btn border border-gray-300 p-3 rounded-md text-center  transition" data-delivery="pickup">i 箱/自郵領件</button>
                     </div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">寄達地區</label>
                     <div class="space-y-2">
-                        <button class="express-option-btn w-full border border-gray-300 p-3 rounded-md text-left hover:bg-gray-50 transition" data-region="local">
+                        <button class="express-option-btn w-full border border-gray-300 p-3 rounded-md text-left  transition" data-region="local">
                             本地、同縣市、鄰近縣市
                         </button>
-                        <button class="express-option-btn w-full border border-gray-300 p-3 rounded-md text-left hover:bg-gray-50 transition" data-region="other">
+                        <button class="express-option-btn w-full border border-gray-300 p-3 rounded-md text-left  transition" data-region="other">
                             本島其他地區
                         </button>
-                        <button class="express-option-btn w-full border border-gray-300 p-3 rounded-md text-left hover:bg-gray-50 transition" data-region="island">
+                        <button class="express-option-btn w-full border border-gray-300 p-3 rounded-md text-left  transition" data-region="island">
                             本島與外島互寄
                         </button>
                     </div>
