@@ -1,336 +1,516 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>簡易郵資查詢</title>
-    <!-- 載入 Tailwind CSS -->
+    <title>中華郵政資費計算器</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
     <style>
-        /* 簡單的 Tab 選中樣式 */
-        .tab-btn.active {
-            border-color: #3b82f6; /* blue-500 */
-            color: #3b82f6;
-            background-color: #eff6ff; /* blue-50 */
-        }
-        .mail-option-btn.active {
-            background-color: #2563eb; /* blue-600 */
-            color: white;
-            border-color: #2563eb; /* blue-600 */
-        }
-        .express-delivery-btn.active, .express-option-btn.active {
-            background-color: #2563eb; /* blue-600 */
-            color: white;
-            border-color: #2563eb; /* blue-600 */
-        }
-        /* 隱藏/顯示 Tab 內容 */
-        .tab-content {
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
-        .tab-content.active {
-            display: block;
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        body {
+            font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center font-sans p-4">
+<body class="bg-slate-50">
+    <div id="root"></div>
 
-    <div class="bg-white p-6 sm:p-8 rounded-lg shadow-xl w-full max-w-lg">
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-        <h1 class="text-2xl font-bold text-center text-gray-800 mb-2">簡易郵資查詢</h1>
-        <p id="rate-date" class="text-center text-sm text-gray-500 mb-6">（國內函件費率：民國108年11月1日）</p>
+        // --- Icons Components (Inline SVG replacement for Lucide) ---
+        const Mail = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        );
+        const Package = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        );
+        const Truck = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>
+        );
+        const AlertCircle = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+        );
+        const CheckCircle2 = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+        );
+        const Calculator = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+        );
+        const Scale = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+        );
+        const MapPin = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+        );
 
-        <!-- Tab 按鈕 -->
-        <div class="flex border-b border-gray-200 mb-6">
-            <button id="tab-mail-btn" class="tab-btn active flex-1 text-center py-3 px-4 font-semibold text-gray-600 border-b-4 border-transparent transition " data-tab="mail">
-                國內函件
-            </button>
-            <button id="tab-express-btn" class="tab-btn flex-1 text-center py-3 px-4 font-semibold text-gray-600 border-b-4 border-transparent transition " data-tab="express">
-                國內快捷
-            </button>
-        </div>
+        // --- 資費資料常數 (Rates Data) ---
 
-        <!-- Tab 內容：國內函件 -->
-        <div id="tab-mail" class="tab-content active">
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">函件種類</label>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <input type="radio" id="mail-type-letter" name="mail-type-radio" value="letter" class="hidden peer" checked>
-                            <label for="mail-type-letter" class="block w-full text-center p-3 border border-gray-300 rounded-md cursor-pointer transition  peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600">
-                                信函
-                            </label>
-                        </div>
-                        <div>
-                            <input type="radio" id="mail-type-printed" name="mail-type-radio" value="printed" class="hidden peer">
-                            <label for="mail-type-printed" class="block w-full text-center p-3 border border-gray-300 rounded-md cursor-pointer transition  peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600">
-                                印刷物
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <label for="mail-weight" class="block text-sm font-medium text-gray-700 mb-1">重量 (公克)</label>
-                    <input type="number" id="mail-weight" placeholder="請輸入公克數" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">郵寄方式</label>
-                    <div class="grid grid-cols-3 gap-4">
-                        <button class="mail-option-btn border border-gray-300 p-3 rounded-md text-center  transition" data-type="ordinary">普通</button>
-                        <button class="mail-option-btn border border-gray-300 p-3 rounded-md text-center  transition" data-type="prompt">限時</button>
-                        <button class="mail-option-btn border border-gray-300 p-3 rounded-md text-center  transition" data-type="registered">掛號</button>
-                        <button class="mail-option-btn border border-gray-300 p-3 rounded-md text-center  transition" data-type="prompt-registered">限時掛號</button>
-                        <button class="mail-option-btn border border-gray-300 p-3 rounded-md text-center  transition" data-type="registered-receipt">掛號附回執</button>
-                        <button class="mail-option-btn border border-gray-300 p-3 rounded-md text-center  transition" data-type="prompt-registered-receipt">限時掛號附回執</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        // 1. 信函 (Letter) 資費表
+        const LETTER_RATES = [
+        { max: 20, price: 8 },
+        { max: 50, price: 16 },
+        { max: 100, price: 24 },
+        { max: 250, price: 40 },
+        { max: 500, price: 72 },
+        { max: 1000, price: 112 },
+        { max: 2000, price: 160 }
+        ];
 
-        <!-- Tab 內容：國內快捷 -->
-        <div id="tab-express" class="tab-content">
-            <div class="space-y-4">
-                <div>
-                    <label for="express-weight" class="block text-sm font-medium text-gray-700 mb-1">重量 (公克)</label>
-                    <input type="number" id="express-weight" placeholder="請輸入公克數 (20公斤內)" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">寄送方式</label>
-                    <div class="grid grid-cols-2 gap-4">
-                        <button class="express-delivery-btn border border-gray-300 p-3 rounded-md text-center  transition active" data-delivery="delivery">宅配</button>
-                        <button class="express-delivery-btn border border-gray-300 p-3 rounded-md text-center  transition" data-delivery="pickup">i 箱/自郵領件</button>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">寄達地區</label>
-                    <div class="space-y-2">
-                        <button class="express-option-btn w-full border border-gray-300 p-3 rounded-md text-left  transition" data-region="local">
-                            本地、同縣市、鄰近縣市
-                        </button>
-                        <button class="express-option-btn w-full border border-gray-300 p-3 rounded-md text-left  transition" data-region="other">
-                            本島其他地區
-                        </button>
-                        <button class="express-option-btn w-full border border-gray-300 p-3 rounded-md text-left  transition" data-region="island">
-                            本島與外島互寄
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        // 2. 印刷物 (Printed Matter) 資費表
+        const PRINT_RATES = [
+        { max: 50, price: 6 },
+        { max: 100, price: 12 },
+        { max: 250, price: 20 },
+        { max: 500, price: 36 },
+        { max: 1000, price: 64 },
+        { max: 2000, price: 104 }
+        ];
 
-        <!-- Tab 內容：便利箱/袋 -->
-        <!-- REMOVED: "便利箱/袋" tab content has been removed -->
+        // 3. 小包 (Small Packet) - 每 100g 12元
+        const SMALL_PACKET_UNIT_PRICE = 12;
+        const SMALL_PACKET_UNIT_WEIGHT = 100;
 
-        <!-- 結果顯示區 -->
-        <div id="result-area" class="mt-6 p-6 bg-blue-50 rounded-lg text-center hidden">
-            <p class="text-lg text-blue-800">郵資試算結果</p>
-            <p id="result-text" class="text-4xl font-bold text-blue-600 mt-2">--</p>
-            <p id="result-note" class="text-sm text-gray-600 mt-2"></p>
-        </div>
+        // 4. 包裹 (Parcel) 資費表
+        // 結構: [上限重量, 同縣市, 外縣市, 外島]
+        const PARCEL_RATES = [
+        { max: 5000, local: 70, domestic: 80, island: 100 },
+        { max: 10000, local: 90, domestic: 100, island: 125 },
+        { max: 15000, local: 110, domestic: 120, island: 150 },
+        { max: 20000, local: 135, domestic: 145, island: 180 }
+        ];
 
-    </div>
+        // 5. 便利包 (Smart Pac) - 已含掛號
+        const SMART_PAC_RATES = [
+        { id: 1, name: '1號包 (橙)', size: '約16×28cm', price: 36 },
+        { id: 2, name: '2號包 (綠)', size: '約23×32cm', price: 48 },
+        { id: 3, name: '3號包 (藍)', size: '約28×38cm', price: 60 }
+        ];
 
-    <script>
-        // 國內函件費率 (信函)
-        const letterRates = {
-            ordinary: [8, 16, 24, 40, 72, 112, 160],
-            prompt: [15, 23, 31, 47, 79, 119, 167],
-            registered: [28, 36, 44, 60, 92, 132, 180],
-            'prompt-registered': [35, 43, 51, 67, 99, 139, 187],
-            'registered-receipt': [43, 51, 59, 75, 107, 147, 195], // 掛號 + 15
-            'prompt-registered-receipt': [50, 58, 66, 82, 114, 154, 202] // 限時掛號 + 15
-        };
-        const letterWeights = [20, 50, 100, 250, 500, 1000, 2000];
+        // 加值服務費用
+        const FEE_REGISTERED = 20; // 掛號費
+        const FEE_PROMPT = 7;      // 限時費
+        const FEE_AR = 15;         // 回執費 (需搭配掛號)
 
-        // 國內函件費率 (印刷物)
-        const printedRates = {
-            ordinary: [6, 11, 16, 32, 56, 88],
-            prompt: [13, 18, 23, 39, 63, 95],
-            registered: [26, 31, 36, 52, 76, 108],
-            'prompt-registered': [33, 38, 43, 59, 83, 115],
-            'registered-receipt': [41, 46, 51, 67, 91, 123], // 掛號 + 15
-            'prompt-registered-receipt': [48, 53, 58, 74, 98, 130] // 限時掛號 + 15
-        };
-        const printedWeights = [50, 100, 250, 500, 1000, 2000];
+        const PostCalc = () => {
+        // --- State ---
+        const [mode, setMode] = useState('mail'); // 'mail', 'parcel', 'smartpac'
+        const [subType, setSubType] = useState('letter'); // letter, print, smallpacket, postcard
+        const [weight, setWeight] = useState('');
+        const [isRegistered, setIsRegistered] = useState(false); // 掛號
+        const [isPrompt, setIsPrompt] = useState(false); // 限時
+        const [hasAR, setHasAR] = useState(false); // 回執
+        const [parcelDest, setParcelDest] = useState('domestic'); // local, domestic, island
+        const [smartPacType, setSmartPacType] = useState(1); // 1, 2, 3
+        const [result, setResult] = useState(0);
+        const [breakdown, setBreakdown] = useState('');
+        const [error, setError] = useState('');
 
-        // --- 國內快捷費率 ---
-        // 費率依據：民國110年3月24日公告 (已根據官網校正)
-        const expressRates = {
-            delivery: { // 宅配
-                local:  [80, 100, 130, 170, 210, 250],
-                other:  [120, 150, 190, 250, 320, 400],
-                island: [140, 170, 200, 275, 350, 425]
-            },
-            pickup: { // i箱/郵局領件
-                local:  [58, 78, 108, 148, 188, 228],
-                other:  [98, 128, 168, 228, 298, 378],
-                island: [118, 148, 178, 253, 328, 403]
-            }
-        };
-        const expressWeights = [250, 1000, 5000, 10000, 15000, 20000]; // 單位: 公克
+        // --- Calculation Logic ---
+        useEffect(() => {
+            calculate();
+        }, [mode, subType, weight, isRegistered, isPrompt, hasAR, parcelDest, smartPacType]);
 
-        // Tab 切換邏輯
-        const tabButtons = document.querySelectorAll('.tab-btn');
-        const tabContents = document.querySelectorAll('.tab-content');
-        const rateDateText = document.getElementById('rate-date');
-        const resultArea = document.getElementById('result-area');
-        const resultText = document.getElementById('result-text');
-        const resultNote = document.getElementById('result-note');
+        const calculate = () => {
+            setError('');
+            let basePrice = 0;
+            let details = [];
+            const w = parseFloat(weight);
 
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const tabId = button.dataset.tab;
-
-                // 更新按鈕樣式
-                tabButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-
-                // 顯示對應內容
-                tabContents.forEach(content => {
-                    content.classList.remove('active');
-                    if (content.id === `tab-${tabId}`) {
-                        content.classList.add('active');
-                    }
-                });
-
-                // 更新費率日期說明
-                const rateDates = {
-                    mail: '（國內函件費率：民國108年11月1日）',
-                    express: '（國內快捷費率：民國110年3月24日）'
-                };
-                rateDateText.textContent = rateDates[tabId] || '';
-                rateDateText.classList.toggle('hidden', !rateDates[tabId]);
-
-                
-
-                // 切換時隱藏結果
-                hideResult();
-            });
-        });
-
-        function showResult(price, note = '') {
-            resultText.textContent = `${price} 元`;
-            resultNote.textContent = note;
-            resultArea.classList.remove('hidden');
-        }
-
-        function showError(message) {
-            resultText.textContent = `--`;
-            resultNote.textContent = message;
-            resultArea.classList.remove('hidden');
-        }
-        
-        function hideResult() {
-            resultArea.classList.add('hidden');
-            resultText.textContent = '--';
-            resultNote.textContent = '';
-        }
-
-        /**
-         * 通用的郵資計算函式
-         * @param {number} weight - 重量 (公克)
-         * @param {number[]} weightTiers - 重量級距陣列
-         * @param {number[]} rateTiers - 費率陣列
-         * @param {string} maxWeightText - 最大重量的文字描述 (例如 "2 公斤")
-         * @returns {{price: number}|{error: string}} - 回傳價格物件或錯誤物件
-         */
-        function calculatePrice(weight, weightTiers, rateTiers, maxWeightText) {
-            if (isNaN(weight) || weight <= 0) {
-                return { error: '請輸入有效的重量（公克）。' };
-            }
-            const maxWeight = weightTiers[weightTiers.length - 1];
-            if (weight > maxWeight) {
-                return { error: `重量不得超過 ${maxWeightText}。` };
-            }
-            const index = weightTiers.findIndex(tier => weight <= tier);
-            return { price: rateTiers[index] };
-        }
-
-        // --- 函件計算 ---
-        const mailOptionButtons = document.querySelectorAll('.mail-option-btn');
-        mailOptionButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                // 更新按鈕樣式
-                mailOptionButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-
-                // 計算邏輯
-                const mailType = document.querySelector('input[name="mail-type-radio"]:checked').value;
-                const weight = parseInt(document.getElementById('mail-weight').value, 10);
-                const optionType = button.dataset.type;
-
-                const rates = (mailType === 'letter') ? letterRates : printedRates;
-                const weights = (mailType === 'letter') ? letterWeights : printedWeights;
-                
-                const result = calculatePrice(weight, weights, rates[optionType], '2 公斤');
-
-                if (result.error) {
-                    showError(result.error);
-                    return;
-                }
-                
-                showResult(result.price, `種類: ${mailType === 'letter' ? '信函' : '印刷物'}, 重量: ${weight}g, 方式: ${button.textContent}`);
-            });
-        });
-
-        // --- 快捷計算 ---
-        const expressDeliveryButtons = document.querySelectorAll('.express-delivery-btn');
-        const expressOptionButtons = document.querySelectorAll('.express-option-btn');
-
-        function handleExpressCalculation() {
-            const activeDeliveryBtn = document.querySelector('.express-delivery-btn.active');
-            const activeRegionBtn = document.querySelector('.express-option-btn.active');
+            if (mode === 'mail') {
+            // --- 函件模式 ---
             
-            // Only calculate if both a delivery type and a region are selected
-            if (!activeDeliveryBtn || !activeRegionBtn) {
-                hideResult();
+            // 基本檢查
+            if (subType !== 'postcard' && (!w || w <= 0)) {
+                setResult(0);
+                setBreakdown('請輸入有效重量');
                 return;
             }
 
-            const deliveryType = activeDeliveryBtn.dataset.delivery;
-            const region = activeRegionBtn.dataset.region;
-            const weight = parseInt(document.getElementById('express-weight').value, 10);
+            if (subType === 'letter') {
+                // 信函
+                if (w > 2000) { setError('信函限重 2 公斤'); return; }
+                const tier = LETTER_RATES.find(r => w <= r.max);
+                if (tier) basePrice = tier.price;
+                details.push(`信函資費: $${basePrice}`);
+            } 
+            else if (subType === 'print') {
+                // 印刷物
+                if (w > 2000) { setError('印刷物一般限重 2 公斤'); return; }
+                const tier = PRINT_RATES.find(r => w <= r.max);
+                if (tier) basePrice = tier.price;
+                details.push(`印刷物資費: $${basePrice}`);
+            } 
+            else if (subType === 'smallpacket') {
+                // 小包
+                if (w > 1000) { setError('小包限重 1 公斤'); return; }
+                const units = Math.ceil(w / SMALL_PACKET_UNIT_WEIGHT);
+                basePrice = units * SMALL_PACKET_UNIT_PRICE;
+                details.push(`小包資費 (${units}單位 x $12): $${basePrice}`);
+            } 
+            else if (subType === 'postcard') {
+                // 明信片
+                basePrice = 5;
+                details.push(`明信片資費: $5`);
+            }
 
-            const result = calculatePrice(weight, expressWeights, expressRates[deliveryType][region], '20 公斤');
-            if (result.error) {
-                showError(result.error);
+            // 加值服務
+            if (isRegistered) {
+                basePrice += FEE_REGISTERED;
+                details.push(`掛號費: +$${FEE_REGISTERED}`);
+            }
+            if (isPrompt) {
+                let promptFee = FEE_PROMPT;
+                // 特殊規則：限時明信片 12元 (5+7)
+                basePrice += promptFee;
+                details.push(`限時費: +$${promptFee}`);
+            }
+            if (hasAR) {
+                // 回執必須搭配掛號
+                if (!isRegistered) {
+                setError('附回執服務必須搭配「掛號」');
+                return;
+                }
+                basePrice += FEE_AR; 
+                details.push(`回執費: +$${FEE_AR}`);
+            }
+
+            } else if (mode === 'parcel') {
+            // --- 包裹模式 ---
+            if (!w || w <= 0) {
+                setResult(0);
+                setBreakdown('請輸入有效重量');
                 return;
             }
-            showResult(result.price, `方式: ${deliveryType === 'delivery' ? '宅配' : 'i箱/領件'}, 重量: ${weight}g, 地區: ${activeRegionBtn.textContent.trim()}`);
-        }
+            if (w > 20000) { setError('國內包裹限重 20 公斤'); return; }
 
-        expressDeliveryButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                expressDeliveryButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-                handleExpressCalculation();
-            });
-        });
+            const w_grams = w; 
+            
+            const tier = PARCEL_RATES.find(r => w_grams <= r.max);
+            
+            if (tier) {
+                if (parcelDest === 'local') basePrice = tier.local;
+                else if (parcelDest === 'domestic') basePrice = tier.domestic;
+                else if (parcelDest === 'island') basePrice = tier.island;
+                
+                const destText = parcelDest === 'local' ? '同縣市' : parcelDest === 'domestic' ? '外縣市' : '外島';
+                details.push(`包裹資費 (${destText}, < ${(tier.max/1000).toFixed(0)}kg): $${basePrice}`);
+            } else {
+                setError('超過重量限制'); return;
+            }
 
-        expressOptionButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                expressOptionButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-                handleExpressCalculation();
-            });
-        });
+            } else if (mode === 'smartpac') {
+            // --- 便利包 ---
+            const pack = SMART_PAC_RATES.find(p => p.id === smartPacType);
+            if (pack) {
+                basePrice = pack.price;
+                details.push(`${pack.name}: $${pack.price}`);
+                details.push(`(內含掛號費，限重1kg)`);
+            }
+            // 便利包可以加限時
+            if (isPrompt) {
+                basePrice += FEE_PROMPT;
+                details.push(`限時費: +$${FEE_PROMPT}`);
+            }
+            // 便利包可以加回執
+            if (hasAR) {
+                basePrice += FEE_AR;
+                details.push(`回執費: +$${FEE_AR}`);
+            }
+            }
 
-        // --- Event Listeners to clear results ---
+            setResult(basePrice);
+            setBreakdown(details.join(' + '));
+        };
 
-        // 重量輸入時隱藏舊結果
-        document.getElementById('mail-weight').addEventListener('input', () => {
-            document.querySelectorAll('.mail-option-btn').forEach(btn => btn.classList.remove('active'));
-            hideResult();
-        });
-        document.getElementById('express-weight').addEventListener('input', handleExpressCalculation);
-        document.querySelectorAll('input[name="mail-type-radio"]').forEach(radio => {
-            radio.addEventListener('change', () => {
-                document.querySelectorAll('.mail-option-btn').forEach(btn => btn.classList.remove('active'));
-                hideResult();
-            });
-        });
+        // Helper UI Components
+        const ModeButton = ({ id, label, icon: Icon }) => (
+            <button
+            onClick={() => {
+                setMode(id);
+                setWeight('');
+                setError('');
+                // Reset defaults when switching
+                if (id === 'smartpac') {
+                    setIsRegistered(true); // 便利包預設掛號
+                } else {
+                    setIsRegistered(false);
+                }
+                setIsPrompt(false);
+                setHasAR(false);
+            }}
+            className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-all duration-200 border-2 font-medium ${
+                mode === id
+                ? 'bg-green-600 text-white border-green-600 shadow-md'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-green-300 hover:bg-green-50'
+            }`}
+            >
+            <Icon size={20} />
+            <span>{label}</span>
+            </button>
+        );
 
+        return (
+            <div className="min-h-screen bg-slate-50 text-slate-800 font-sans p-4 md:p-8 flex flex-col items-center">
+            
+            {/* Header */}
+            <header className="max-w-md w-full mb-6 text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-green-600 rounded-2xl shadow-lg mb-4">
+                <Calculator className="text-white" size={32} />
+                </div>
+                <h1 className="text-3xl font-bold text-slate-900 mb-2">中華郵政資費試算</h1>
+                <p className="text-slate-500">快速查詢信函、包裹與便利包郵資</p>
+            </header>
+
+            {/* Main Card */}
+            <div className="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden border border-slate-100">
+                
+                {/* Mode Tabs */}
+                <div className="p-4 grid grid-cols-3 gap-3 bg-slate-50/50 border-b border-slate-100">
+                <ModeButton id="mail" label="函件" icon={Mail} />
+                <ModeButton id="parcel" label="包裹" icon={Package} />
+                <ModeButton id="smartpac" label="便利包" icon={Truck} />
+                </div>
+
+                <div className="p-6 space-y-6">
+                
+                {/* Content based on Mode */}
+                {mode === 'mail' && (
+                    <div className="space-y-4">
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">郵件類型</label>
+                    <div className="grid grid-cols-2 gap-3">
+                        {['letter:信函', 'print:印刷物', 'smallpacket:小包', 'postcard:明信片'].map((item) => {
+                        const [val, text] = item.split(':');
+                        return (
+                            <button
+                            key={val}
+                            onClick={() => setSubType(val)}
+                            className={`py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
+                                subType === val
+                                ? 'bg-green-100 text-green-800 border-green-200'
+                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                            }`}
+                            >
+                            {text}
+                            </button>
+                        );
+                        })}
+                    </div>
+                    </div>
+                )}
+
+                {mode === 'smartpac' && (
+                    <div className="space-y-4">
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">便利包尺寸</label>
+                    <div className="space-y-2">
+                        {SMART_PAC_RATES.map((pac) => (
+                        <div
+                            key={pac.id}
+                            onClick={() => setSmartPacType(pac.id)}
+                            className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
+                            smartPacType === pac.id
+                                ? 'border-green-500 bg-green-50 ring-1 ring-green-500'
+                                : 'border-slate-200 hover:border-green-300'
+                            }`}
+                        >
+                            <div>
+                            <div className="font-bold text-slate-800">{pac.name}</div>
+                            <div className="text-xs text-slate-500">{pac.size}</div>
+                            </div>
+                            <div className="text-green-700 font-bold">${pac.price}</div>
+                        </div>
+                        ))}
+                    </div>
+                    <div className="bg-amber-50 text-amber-800 text-xs p-3 rounded-lg flex gap-2">
+                        <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                        <p>便利包費用已包含掛號服務。限重 1 公斤。</p>
+                    </div>
+                    </div>
+                )}
+
+                {/* Weight Input (Shared for Mail & Parcel) */}
+                {mode !== 'smartpac' && subType !== 'postcard' && (
+                    <div className="space-y-2">
+                    <label className="flex items-center justify-between text-sm font-semibold text-slate-700">
+                        <span>重量 (公克/g)</span>
+                        <span className="text-xs text-slate-400 font-normal">
+                        {mode === 'parcel' ? '最大 20,000g' : subType === 'letter' || subType === 'print' ? '最大 2,000g' : '最大 1,000g'}
+                        </span>
+                    </label>
+                    <div className="relative">
+                        <input
+                        type="number"
+                        value={weight}
+                        onChange={(e) => setWeight(e.target.value)}
+                        placeholder="輸入重量..."
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-all text-lg font-medium text-slate-800 placeholder:text-slate-300"
+                        />
+                        <Scale className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                    </div>
+                    {/* Quick Weight Buttons */}
+                    <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                        {[20, 50, 100, 250, 500].map(w => (
+                        <button key={w} onClick={() => setWeight(w)} className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs hover:bg-slate-200 transition-colors whitespace-nowrap">
+                            {w}g
+                        </button>
+                        ))}
+                        {mode === 'parcel' && [1000, 5000, 10000].map(w => (
+                        <button key={w} onClick={() => setWeight(w)} className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs hover:bg-slate-200 transition-colors whitespace-nowrap">
+                        {w}g
+                        </button>
+                        ))}
+                    </div>
+                    </div>
+                )}
+
+                {/* Parcel Specific: Destination */}
+                {mode === 'parcel' && (
+                    <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                    <MapPin size={16} />
+                    <span>寄送地點</span>
+                    </label>
+                    <div className="flex bg-slate-100 p-1 rounded-xl">
+                        {[
+                        { id: 'local', text: '同縣市' },
+                        { id: 'domestic', text: '外縣市' },
+                        { id: 'island', text: '外島' }
+                        ].map((dest) => (
+                        <button
+                            key={dest.id}
+                            onClick={() => setParcelDest(dest.id)}
+                            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+                            parcelDest === dest.id
+                                ? 'bg-white text-green-700 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                        >
+                            {dest.text}
+                        </button>
+                        ))}
+                    </div>
+                </div>
+                )}
+
+                {/* Extra Services */}
+                <div className="space-y-3 pt-2 border-t border-slate-100">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">加值服務</p>
+                    <div className="space-y-2">
+                    
+                    {/* Registered Toggle */}
+                    <label className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
+                        isRegistered ? 'bg-green-50 border-green-200' : 'bg-white border-slate-200'
+                    } ${mode === 'smartpac' ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                        <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                            isRegistered ? 'bg-green-500 border-green-500' : 'border-slate-300'
+                        }`}>
+                            {isRegistered && <CheckCircle2 size={14} className="text-white" />}
+                        </div>
+                        <span className="font-medium text-slate-700">掛號</span>
+                        </div>
+                        <span className="text-sm text-slate-500">
+                        {mode === 'smartpac' ? '已內含' : '+$20'}
+                        </span>
+                        <input 
+                        type="checkbox" 
+                        checked={isRegistered} 
+                        onChange={(e) => {
+                            if (mode !== 'smartpac') setIsRegistered(e.target.checked);
+                        }}
+                        className="hidden" 
+                        disabled={mode === 'smartpac'}
+                        />
+                    </label>
+
+                    {/* Prompt Toggle */}
+                    <label className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
+                        isPrompt ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-200'
+                    }`}>
+                        <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                            isPrompt ? 'bg-blue-500 border-blue-500' : 'border-slate-300'
+                        }`}>
+                            {isPrompt && <CheckCircle2 size={14} className="text-white" />}
+                        </div>
+                        <span className="font-medium text-slate-700">限時</span>
+                        </div>
+                        <span className="text-sm text-slate-500">+$7</span>
+                        <input type="checkbox" checked={isPrompt} onChange={(e) => setIsPrompt(e.target.checked)} className="hidden" />
+                    </label>
+
+                    {/* AR Toggle */}
+                    <label className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
+                        hasAR ? 'bg-purple-50 border-purple-200' : 'bg-white border-slate-200'
+                    }`}>
+                        <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                            hasAR ? 'bg-purple-500 border-purple-500' : 'border-slate-300'
+                        }`}>
+                            {hasAR && <CheckCircle2 size={14} className="text-white" />}
+                        </div>
+                        <span className="font-medium text-slate-700">回執 (雙掛號)</span>
+                        </div>
+                        <span className="text-sm text-slate-500">+$15</span>
+                        <input type="checkbox" checked={hasAR} onChange={(e) => setHasAR(e.target.checked)} className="hidden" />
+                    </label>
+
+                    </div>
+                </div>
+
+                </div>
+
+                {/* Result Footer */}
+                <div className="bg-slate-900 p-6 text-white">
+                {error ? (
+                    <div className="flex items-center gap-2 text-red-300 font-medium animate-pulse">
+                    <AlertCircle size={20} />
+                    <span>{error}</span>
+                    </div>
+                ) : (
+                    <div className="flex justify-between items-end">
+                    <div className="flex flex-col gap-1">
+                        <span className="text-slate-400 text-sm font-medium">預估郵資</span>
+                        <span className="text-slate-400 text-xs max-w-[180px] leading-tight">{breakdown}</span>
+                    </div>
+                    <div className="text-5xl font-bold tracking-tight">
+                        <span className="text-2xl align-top mr-1 opacity-50">$</span>
+                        {result}
+                    </div>
+                    </div>
+                )}
+                </div>
+
+            </div>
+            
+            <footer className="mt-8 text-slate-400 text-xs text-center max-w-xs leading-relaxed">
+                此計算器依據 2024 年中華郵政官網公開資費表製作。<br/>實際郵資以郵局臨櫃秤重判定為準。
+            </footer>
+
+            </div>
+        );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<PostCalc />);
     </script>
-
 </body>
 </html>
