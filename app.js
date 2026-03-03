@@ -2,8 +2,6 @@ const {
   useState,
   useEffect
 } = React;
-
-// --- Icons Components (Inline SVG replacement for Lucide) ---
 const Mail = ({
   size = 24,
   className = ""
@@ -220,8 +218,41 @@ const MapPin = ({
   cy: "10",
   r: "3"
 }));
-
-// --- 資費資料常數 (Rates Data) ---
+const Hash = ({
+  size = 24,
+  className = ""
+}) => /*#__PURE__*/React.createElement("svg", {
+  xmlns: "http://www.w3.org/2000/svg",
+  width: size,
+  height: size,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "2",
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  className: className
+}, /*#__PURE__*/React.createElement("line", {
+  x1: "4",
+  x2: "20",
+  y1: "9",
+  y2: "9"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "4",
+  x2: "20",
+  y1: "15",
+  y2: "15"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "10",
+  x2: "8",
+  y1: "3",
+  y2: "21"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "16",
+  x2: "14",
+  y1: "3",
+  y2: "21"
+}));
 const LETTER_RATES = [{
   max: 20,
   price: 8
@@ -302,33 +333,50 @@ const SMART_PAC_RATES = [{
   size: '約28×38cm',
   price: 60
 }];
-const FEE_REGISTERED = 20; // 掛號費
-const FEE_PROMPT = 7; // 限時費
-const FEE_AR = 15; // 回執費
-
+const FEE_REGISTERED = 20;
+const FEE_PROMPT = 7;
+const FEE_AR = 15;
 const PostCalc = () => {
-  // --- State ---
-  const [mode, setMode] = useState('mail'); // 'mail', 'parcel', 'smartpac'
-  const [subType, setSubType] = useState('letter'); // letter, print, smallpacket, postcard
+  const [mode, setMode] = useState('mail');
+  const [subType, setSubType] = useState('letter');
   const [weight, setWeight] = useState('');
-  const [isRegistered, setIsRegistered] = useState(false); // 掛號
-  const [isPrompt, setIsPrompt] = useState(false); // 限時
-  const [hasAR, setHasAR] = useState(false); // 回執
-  const [parcelDest, setParcelDest] = useState('domestic'); // local, domestic, island
-  const [smartPacType, setSmartPacType] = useState(1); // 1, 2, 3
+  const [quantity, setQuantity] = useState('1');
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [isPrompt, setIsPrompt] = useState(false);
+  const [hasAR, setHasAR] = useState(false);
+  const [parcelDest, setParcelDest] = useState('domestic');
+  const [smartPacType, setSmartPacType] = useState(1);
+  const [bulkOrdinaryApplied, setBulkOrdinaryApplied] = useState(false);
+  const [bulkLocal, setBulkLocal] = useState(true);
+  const [bulkAdd1, setBulkAdd1] = useState(false);
+  const [bulkAdd2, setBulkAdd2] = useState(false);
+  const [bulkAdd3, setBulkAdd3] = useState(false);
+  const [bulkAdd4, setBulkAdd4] = useState(false);
+  const [bulkAdd5, setBulkAdd5] = useState(false);
+  const [bulkRegApplied, setBulkRegApplied] = useState(false);
   const [result, setResult] = useState(0);
   const [breakdown, setBreakdown] = useState('');
   const [error, setError] = useState('');
-
-  // --- Calculation Logic ---
+  useEffect(() => {
+    if (!bulkAdd1) {
+      if (bulkAdd3) setBulkAdd3(false);
+      if (bulkAdd4) setBulkAdd4(false);
+    }
+  }, [bulkAdd1]);
   useEffect(() => {
     calculate();
-  }, [mode, subType, weight, isRegistered, isPrompt, hasAR, parcelDest, smartPacType]);
+  }, [mode, subType, weight, quantity, isRegistered, isPrompt, hasAR, parcelDest, smartPacType, bulkOrdinaryApplied, bulkLocal, bulkAdd1, bulkAdd2, bulkAdd3, bulkAdd4, bulkAdd5, bulkRegApplied]);
   const calculate = () => {
     setError('');
     let basePrice = 0;
     let details = [];
     const w = parseFloat(weight);
+    const q = parseInt(quantity, 10);
+    if (isNaN(q) || q <= 0) {
+      setResult(0);
+      setBreakdown('請輸入有效件數');
+      return;
+    }
     if (mode === 'mail') {
       if (subType !== 'postcard' && (!w || w <= 0)) {
         setResult(0);
@@ -342,7 +390,7 @@ const PostCalc = () => {
         }
         const tier = LETTER_RATES.find(r => w <= r.max);
         if (tier) basePrice = tier.price;
-        details.push(`信函資費: $${basePrice}`);
+        details.push(`信函($${basePrice}×${q})`);
       } else if (subType === 'print') {
         if (w > 2000) {
           setError('印刷物一般限重 2 公斤');
@@ -350,7 +398,7 @@ const PostCalc = () => {
         }
         const tier = PRINT_RATES.find(r => w <= r.max);
         if (tier) basePrice = tier.price;
-        details.push(`印刷物資費: $${basePrice}`);
+        details.push(`印刷物($${basePrice}×${q})`);
       } else if (subType === 'smallpacket') {
         if (w > 1000) {
           setError('小包限重 1 公斤');
@@ -358,28 +406,56 @@ const PostCalc = () => {
         }
         const units = Math.ceil(w / SMALL_PACKET_UNIT_WEIGHT);
         basePrice = units * SMALL_PACKET_UNIT_PRICE;
-        details.push(`小包 ($12/100g): $${basePrice}`);
+        details.push(`小包($${basePrice}×${q})`);
       } else if (subType === 'postcard') {
         basePrice = 5;
-        details.push(`明信片: $5`);
+        details.push(`明信片($5×${q})`);
       }
+      let totalBase = basePrice * q;
+      let discountAmt = 0;
       if (isRegistered) {
-        basePrice += FEE_REGISTERED;
-        details.push(`掛號: +$${FEE_REGISTERED}`);
+        if (q >= 1000 && bulkRegApplied) {
+          discountAmt = Math.round(totalBase * 0.02);
+          totalBase -= discountAmt;
+          details.push(`大宗掛號折扣(-$${discountAmt})`);
+        }
+        const regFee = FEE_REGISTERED * q;
+        totalBase += regFee;
+        details.push(`掛號(+$${regFee})`);
+      } else {
+        if (q >= 5000 && bulkOrdinaryApplied && (subType === 'letter' || subType === 'print' || subType === 'postcard')) {
+          let basicDiscount = 0;
+          if (q >= 50000) basicDiscount = bulkLocal ? 12 : 3.5;else if (q >= 20000) basicDiscount = bulkLocal ? 7 : 1.5;else if (q >= 5000) basicDiscount = bulkLocal ? 6 : 1;
+          let addDiscount = 0;
+          if (bulkAdd1) addDiscount += 2;
+          if (bulkAdd2 && subType !== 'postcard') addDiscount += 2;
+          if (bulkAdd3 && bulkAdd1) addDiscount += 2;
+          if (q >= 20000) {
+            if (bulkAdd4 && bulkAdd1) addDiscount += 5;
+            if (bulkAdd5) addDiscount += 3;
+          }
+          const totalPct = basicDiscount + addDiscount;
+          discountAmt = Math.round(basePrice * q * (totalPct / 100));
+          totalBase -= discountAmt;
+          details.push(`大宗折扣${totalPct}%(-$${discountAmt})`);
+        }
       }
       if (isPrompt) {
-        let promptFee = FEE_PROMPT;
-        basePrice += promptFee;
-        details.push(`限時: +$${promptFee}`);
+        const promptFee = FEE_PROMPT * q;
+        totalBase += promptFee;
+        details.push(`限時(+$${promptFee})`);
       }
       if (hasAR) {
         if (!isRegistered) {
           setError('附回執需搭配「掛號」');
           return;
         }
-        basePrice += FEE_AR;
-        details.push(`回執: +$${FEE_AR}`);
+        const arFee = FEE_AR * q;
+        totalBase += arFee;
+        details.push(`回執(+$${arFee})`);
       }
+      setResult(totalBase);
+      setBreakdown(details.join(' '));
     } else if (mode === 'parcel') {
       if (!w || w <= 0) {
         setResult(0);
@@ -391,35 +467,36 @@ const PostCalc = () => {
         return;
       }
       const tier = PARCEL_RATES.find(r => w <= r.max);
+      let unitPrice = 0;
       if (tier) {
-        if (parcelDest === 'local') basePrice = tier.local;else if (parcelDest === 'domestic') basePrice = tier.domestic;else if (parcelDest === 'island') basePrice = tier.island;
+        if (parcelDest === 'local') unitPrice = tier.local;else if (parcelDest === 'domestic') unitPrice = tier.domestic;else if (parcelDest === 'island') unitPrice = tier.island;
         const destText = parcelDest === 'local' ? '同縣市' : parcelDest === 'domestic' ? '外縣市' : '外島';
-        details.push(`包裹 (${destText}): $${basePrice}`);
+        details.push(`包裹(${destText} $${unitPrice}×${q})`);
+        setResult(unitPrice * q);
+        setBreakdown(details.join(' '));
       } else {
         setError('超過重量限制');
         return;
       }
     } else if (mode === 'smartpac') {
       const pack = SMART_PAC_RATES.find(p => p.id === smartPacType);
+      let total = 0;
       if (pack) {
-        basePrice = pack.price;
-        details.push(`${pack.name}: $${pack.price}`);
-        details.push(`(含掛號)`);
+        total += pack.price * q;
+        details.push(`${pack.name}($${pack.price}×${q} 含掛號)`);
       }
       if (isPrompt) {
-        basePrice += FEE_PROMPT;
-        details.push(`限時: +$${FEE_PROMPT}`);
+        total += FEE_PROMPT * q;
+        details.push(`限時(+$${FEE_PROMPT * q})`);
       }
       if (hasAR) {
-        basePrice += FEE_AR;
-        details.push(`回執: +$${FEE_AR}`);
+        total += FEE_AR * q;
+        details.push(`回執(+$${FEE_AR * q})`);
       }
+      setResult(total);
+      setBreakdown(details.join(' '));
     }
-    setResult(basePrice);
-    setBreakdown(details.join(' + '));
   };
-
-  // Helper UI Components
   const ModeButton = ({
     id,
     label,
@@ -428,6 +505,7 @@ const PostCalc = () => {
     onClick: () => {
       setMode(id);
       setWeight('');
+      setQuantity('1');
       setError('');
       if (id === 'smartpac') {
         setIsRegistered(true);
@@ -506,11 +584,15 @@ const PostCalc = () => {
   }, /*#__PURE__*/React.createElement(AlertCircle, {
     size: 16,
     className: "shrink-0 mt-0.5"
-  }), /*#__PURE__*/React.createElement("p", null, "\u4FBF\u5229\u5305\u8CBB\u7528\u5DF2\u5305\u542B\u639B\u865F\u670D\u52D9\u3002\u9650\u91CD 1 \u516C\u65A4\u3002"))), mode !== 'smartpac' && subType !== 'postcard' && /*#__PURE__*/React.createElement("div", {
-    className: "space-y-2"
+  }), /*#__PURE__*/React.createElement("p", null, "\u4FBF\u5229\u5305\u8CBB\u7528\u5DF2\u5305\u542B\u639B\u865F\u670D\u52D9\u3002\u9650\u91CD 1 \u516C\u65A4\u3002"))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2 col-span-2"
+  }, mode !== 'smartpac' && subType !== 'postcard' && /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2 mb-4"
   }, /*#__PURE__*/React.createElement("label", {
     className: "flex items-center justify-between text-sm font-semibold text-slate-700"
-  }, /*#__PURE__*/React.createElement("span", null, "\u91CD\u91CF (\u516C\u514B/g)"), /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", null, "\u55AE\u4EF6\u91CD\u91CF (\u516C\u514B/g)"), /*#__PURE__*/React.createElement("span", {
     className: "text-xs text-slate-400 font-normal"
   }, mode === 'parcel' ? '限重 20kg' : subType === 'letter' || subType === 'print' ? '限重 2kg' : '限重 1kg')), /*#__PURE__*/React.createElement("div", {
     className: "relative"
@@ -533,13 +615,109 @@ const PostCalc = () => {
     key: w,
     onClick: () => setWeight(w),
     className: "px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs hover:bg-slate-200 transition-colors whitespace-nowrap flex-shrink-0"
-  }, w, "g")))), mode === 'parcel' && /*#__PURE__*/React.createElement("div", {
-    className: "space-y-2"
+  }, w, "g"))))), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2 col-span-2"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "flex items-center text-sm font-semibold text-slate-700"
+  }, /*#__PURE__*/React.createElement("span", null, "\u4EA4\u5BC4\u4EF6\u6578")), /*#__PURE__*/React.createElement("div", {
+    className: "relative"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "1",
+    value: quantity,
+    onChange: e => setQuantity(e.target.value),
+    className: "w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-all text-lg font-medium text-slate-800 placeholder:text-slate-300"
+  }), /*#__PURE__*/React.createElement(Hash, {
+    className: "absolute left-3 top-1/2 -translate-y-1/2 text-slate-400",
+    size: 20
+  })))), mode === 'mail' && parseInt(quantity, 10) >= 1000 && /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-3 mt-4"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-xs font-bold text-slate-500 uppercase tracking-wider"
+  }, "\u5927\u5B97\u4EA4\u5BC4\u512A\u60E0"), isRegistered ? /*#__PURE__*/React.createElement("label", {
+    className: "flex items-start gap-2 cursor-pointer"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "checkbox",
+    checked: bulkRegApplied,
+    onChange: e => setBulkRegApplied(e.target.checked),
+    className: "mt-1 rounded text-green-600"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-slate-700"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "font-semibold"
+  }, "\u5927\u5B97\u639B\u865F (\u57FA\u672C\u90F5\u8CC7 2% \u6298\u6263)"), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-slate-500 mt-0.5"
+  }, "\u9700\u81EA\u537020\u78BC\u689D\u78BC\u4E26\u4E0A\u50B3\u96FB\u5B50\u6A94"))) : parseInt(quantity, 10) >= 5000 ? /*#__PURE__*/React.createElement("div", {
+    className: "space-y-3"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "flex items-start gap-2 cursor-pointer"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "checkbox",
+    checked: bulkOrdinaryApplied,
+    onChange: e => setBulkOrdinaryApplied(e.target.checked),
+    className: "mt-1 rounded text-green-600"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-slate-700"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "font-semibold"
+  }, "\u5957\u7528\u5206\u5340\u6346\u7D2E\u6298\u6263"), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-slate-500 mt-0.5"
+  }, "\u9700\u6309\u524D3\u78BC\u5206\u5340\u5B9A\u6578\u6346\u7D2E\uFF0C\u4E26\u7B26\u5408\u57FA\u672C\u689D\u4EF6"))), bulkOrdinaryApplied && /*#__PURE__*/React.createElement("div", {
+    className: "pl-6 space-y-2 pt-2 border-t border-slate-200"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-200 p-1 rounded-lg w-max mb-3"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setBulkLocal(true),
+    className: `px-3 py-1 text-xs font-medium rounded-md ${bulkLocal ? 'bg-white text-green-700 shadow-sm' : 'text-slate-600'}`
+  }, "\u672C\u5730"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setBulkLocal(false),
+    className: `px-3 py-1 text-xs font-medium rounded-md ${!bulkLocal ? 'bg-white text-green-700 shadow-sm' : 'text-slate-600'}`
+  }, "\u5916\u5730")), /*#__PURE__*/React.createElement("label", {
+    className: "flex items-center gap-2 cursor-pointer text-sm text-slate-700"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "checkbox",
+    checked: bulkAdd1,
+    onChange: e => setBulkAdd1(e.target.checked),
+    className: "rounded text-green-600"
+  }), "\u540D\u5740\u683C\u5F0F\u6A19\u6E96\u5316 (+2%)"), subType !== 'postcard' && /*#__PURE__*/React.createElement("label", {
+    className: "flex items-center gap-2 cursor-pointer text-sm text-slate-700"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "checkbox",
+    checked: bulkAdd2,
+    onChange: e => setBulkAdd2(e.target.checked),
+    className: "rounded text-green-600"
+  }), "\u7D19\u8CEA\u6A19\u6E96\u578B\u4FE1\u5C01\uFF0C\u5C01\u53E3\u5BC6\u5C01 (+2%)"), /*#__PURE__*/React.createElement("label", {
+    className: `flex items-center gap-2 cursor-pointer text-sm ${bulkAdd1 ? 'text-slate-700' : 'text-slate-400'}`
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "checkbox",
+    disabled: !bulkAdd1,
+    checked: bulkAdd3,
+    onChange: e => setBulkAdd3(e.target.checked),
+    className: "rounded text-green-600"
+  }), "\u63D0\u4F9B\u96FB\u5B50\u6A94 (+2%)"), parseInt(quantity, 10) >= 20000 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("label", {
+    className: `flex items-center gap-2 cursor-pointer text-sm ${bulkAdd1 ? 'text-slate-700' : 'text-slate-400'}`
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "checkbox",
+    disabled: !bulkAdd1,
+    checked: bulkAdd4,
+    onChange: e => setBulkAdd4(e.target.checked),
+    className: "rounded text-green-600"
+  }), "\u5217\u53703+3\u78BC\u4E26\u6392\u5E8F (+5%)"), /*#__PURE__*/React.createElement("label", {
+    className: "flex items-center gap-2 cursor-pointer text-sm text-slate-700"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "checkbox",
+    checked: bulkAdd5,
+    onChange: e => setBulkAdd5(e.target.checked),
+    className: "rounded text-green-600"
+  }), "\u6309\u6295\u905E\u5C40\u53CA3+3\u78BC\u5C08\u888B\u88DD\u7BB1 (+3%)")))) : /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-slate-500"
+  }, "\u5927\u5B97\u5E73\u5E38\u4FE1\u51FD\u9700\u9054 5,000 \u4EF6\u4EE5\u4E0A\u65B9\u4EAB\u6298\u6263\u3002")), mode === 'parcel' && /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2 mt-4"
   }, /*#__PURE__*/React.createElement("label", {
     className: "flex items-center gap-2 text-sm font-semibold text-slate-700"
   }, /*#__PURE__*/React.createElement(MapPin, {
     size: 16
-  }), /*#__PURE__*/React.createElement("span", null, "\u5BC4\u9001\u5730\u9EDE")), /*#__PURE__*/React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("span", null, "\u5BC4\u9054\u5730")), /*#__PURE__*/React.createElement("div", {
     className: "flex bg-slate-100 p-1 rounded-xl"
   }, [{
     id: 'local',
@@ -555,10 +733,10 @@ const PostCalc = () => {
     onClick: () => setParcelDest(dest.id),
     className: `flex-1 py-2 text-sm font-medium rounded-lg transition-all ${parcelDest === dest.id ? 'bg-white text-green-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`
   }, dest.text)))), /*#__PURE__*/React.createElement("div", {
-    className: "space-y-2 pt-2 border-t border-slate-100"
+    className: "space-y-2 pt-4 border-t border-slate-100"
   }, /*#__PURE__*/React.createElement("p", {
     className: "text-xs font-bold text-slate-400 uppercase tracking-wider mb-2"
-  }, "\u52A0\u503C\u670D\u52D9"), /*#__PURE__*/React.createElement("div", {
+  }, "\u52A0\u503C\u670D\u52D9 (\u6BCF\u4EF6)"), /*#__PURE__*/React.createElement("div", {
     className: "space-y-2"
   }, /*#__PURE__*/React.createElement("label", {
     className: `flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all active:scale-[0.99] ${isRegistered ? 'bg-green-50 border-green-200' : 'bg-white border-slate-200'} ${mode === 'smartpac' ? 'opacity-60 cursor-not-allowed' : ''}`
@@ -629,15 +807,15 @@ const PostCalc = () => {
     className: "flex flex-col gap-1 pr-4"
   }, /*#__PURE__*/React.createElement("span", {
     className: "text-slate-400 text-xs font-medium uppercase tracking-wider"
-  }, "\u9810\u4F30\u90F5\u8CC7"), /*#__PURE__*/React.createElement("span", {
-    className: "text-slate-300 text-xs leading-tight line-clamp-2"
+  }, "\u9810\u4F30\u7E3D\u90F5\u8CC7"), /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-300 text-xs leading-tight line-clamp-3"
   }, breakdown)), /*#__PURE__*/React.createElement("div", {
     className: "text-4xl font-bold tracking-tight shrink-0"
   }, /*#__PURE__*/React.createElement("span", {
     className: "text-xl align-top mr-1 opacity-50"
   }, "$"), result)))), /*#__PURE__*/React.createElement("footer", {
     className: "mt-6 mb-2 text-slate-400 text-xs text-center max-w-xs leading-relaxed px-4"
-  }, "\u8CC7\u8CBB\u4F9D\u64DA 2024 \u5E74\u4E2D\u83EF\u90F5\u653F\u5B98\u7DB2\u3002", /*#__PURE__*/React.createElement("br", null), "\u5BE6\u969B\u91D1\u984D\u8ACB\u4EE5\u81E8\u6AC3\u79E4\u91CD\u70BA\u6E96\u3002"));
+  }, "\u8CC7\u8CBB\u4F9D\u64DA 2024 \u5E74\u4E2D\u83EF\u90F5\u653F\u5B98\u7DB2\u3002", /*#__PURE__*/React.createElement("br", null), "\u5927\u5B97\u4EA4\u5BC4\u6298\u6263\u4F9D\u64DA 112 \u5E74\u5BE6\u65BD\u6A19\u6E96\u3002", /*#__PURE__*/React.createElement("br", null), "\u5BE6\u969B\u91D1\u984D\u8ACB\u4EE5\u81E8\u6AC3\u79E4\u91CD\u8207\u6AA2\u6838\u70BA\u6E96\u3002"));
 };
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(/*#__PURE__*/React.createElement(PostCalc, null));
