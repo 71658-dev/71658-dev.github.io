@@ -423,9 +423,14 @@ const PostCalc = () => {
         totalBase += regFee;
         details.push(`掛號(+$${regFee})`);
       } else {
-        if (q >= 5000 && bulkOrdinaryApplied && (subType === 'letter' || subType === 'print' || subType === 'postcard')) {
+        const minBulkOrdinaryQty = subType === 'print' ? 1000 : 5000;
+        if (q >= minBulkOrdinaryQty && bulkOrdinaryApplied && (subType === 'letter' || subType === 'print' || subType === 'postcard')) {
           let basicDiscount = 0;
-          if (q >= 50000) basicDiscount = bulkLocal ? 12 : 3.5;else if (q >= 20000) basicDiscount = bulkLocal ? 7 : 1.5;else if (q >= 5000) basicDiscount = bulkLocal ? 6 : 1;
+          if (subType === 'print') {
+            basicDiscount = bulkLocal ? 16 : 3.5;
+          } else {
+            if (q >= 50000) basicDiscount = bulkLocal ? 12 : 3.5;else if (q >= 20000) basicDiscount = bulkLocal ? 7 : 1.5;else if (q >= 5000) basicDiscount = bulkLocal ? 6 : 1;
+          }
           let addDiscount = 0;
           if (bulkAdd1) addDiscount += 2;
           if (bulkAdd2 && subType !== 'postcard') addDiscount += 2;
@@ -647,7 +652,7 @@ const PostCalc = () => {
     className: "font-semibold"
   }, "\u5927\u5B97\u639B\u865F (\u57FA\u672C\u90F5\u8CC7 2% \u6298\u6263)"), /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-slate-500 mt-0.5"
-  }, "\u9700\u81EA\u537020\u78BC\u689D\u78BC\u4E26\u4E0A\u50B3\u96FB\u5B50\u6A94"))) : parseInt(quantity, 10) >= 5000 ? /*#__PURE__*/React.createElement("div", {
+  }, "\u9700\u81EA\u537020\u78BC\u689D\u78BC\u4E26\u4E0A\u50B3\u96FB\u5B50\u6A94"))) : parseInt(quantity, 10) >= (subType === 'print' ? 1000 : 5000) ? /*#__PURE__*/React.createElement("div", {
     className: "space-y-3"
   }, /*#__PURE__*/React.createElement("label", {
     className: "flex items-start gap-2 cursor-pointer"
@@ -711,7 +716,7 @@ const PostCalc = () => {
     className: "rounded text-green-600"
   }), "\u6309\u6295\u905E\u5C40\u53CA3+3\u78BC\u5C08\u888B\u88DD\u7BB1 (+3%)")))) : /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-slate-500"
-  }, "\u5927\u5B97\u5E73\u5E38\u4FE1\u51FD\u9700\u9054 5,000 \u4EF6\u4EE5\u4E0A\u65B9\u4EAB\u6298\u6263\u3002")), mode === 'parcel' && /*#__PURE__*/React.createElement("div", {
+  }, "\u5927\u5B97\u5E73\u5E38\u4FE1\u51FD\u9700\u9054 5,000 \u4EF6\u3001\u5370\u5237\u7269\u9700\u9054 1,000 \u4EF6\u4EE5\u4E0A\u65B9\u4EAB\u6298\u6263\u3002")), mode === 'parcel' && /*#__PURE__*/React.createElement("div", {
     className: "space-y-2 mt-4"
   }, /*#__PURE__*/React.createElement("label", {
     className: "flex items-center gap-2 text-sm font-semibold text-slate-700"

@@ -153,11 +153,16 @@ const PostCalc = () => {
                 totalBase += regFee;
                 details.push(`掛號(+$${regFee})`);
             } else {
-                if (q >= 5000 && bulkOrdinaryApplied && (subType === 'letter' || subType === 'print' || subType === 'postcard')) {
+                const minBulkOrdinaryQty = subType === 'print' ? 1000 : 5000;
+                if (q >= minBulkOrdinaryQty && bulkOrdinaryApplied && (subType === 'letter' || subType === 'print' || subType === 'postcard')) {
                     let basicDiscount = 0;
-                    if (q >= 50000) basicDiscount = bulkLocal ? 12 : 3.5;
-                    else if (q >= 20000) basicDiscount = bulkLocal ? 7 : 1.5;
-                    else if (q >= 5000) basicDiscount = bulkLocal ? 6 : 1;
+                    if (subType === 'print') {
+                        basicDiscount = bulkLocal ? 16 : 3.5;
+                    } else {
+                        if (q >= 50000) basicDiscount = bulkLocal ? 12 : 3.5;
+                        else if (q >= 20000) basicDiscount = bulkLocal ? 7 : 1.5;
+                        else if (q >= 5000) basicDiscount = bulkLocal ? 6 : 1;
+                    }
 
                     let addDiscount = 0;
                     if (bulkAdd1) addDiscount += 2;
@@ -401,7 +406,7 @@ const PostCalc = () => {
                                 <p className="text-xs text-slate-500 mt-0.5">需自印20碼條碼並上傳電子檔</p>
                             </div>
                         </label>
-                    ) : parseInt(quantity, 10) >= 5000 ? (
+                    ) : parseInt(quantity, 10) >= (subType === 'print' ? 1000 : 5000) ? (
                         <div className="space-y-3">
                             <label className="flex items-start gap-2 cursor-pointer">
                                 <input type="checkbox" checked={bulkOrdinaryApplied} onChange={(e) => setBulkOrdinaryApplied(e.target.checked)} className="mt-1 rounded text-green-600" />
@@ -451,7 +456,7 @@ const PostCalc = () => {
                             )}
                         </div>
                     ) : (
-                        <p className="text-xs text-slate-500">大宗平常信函需達 5,000 件以上方享折扣。</p>
+                        <p className="text-xs text-slate-500">大宗平常信函需達 5,000 件、印刷物需達 1,000 件以上方享折扣。</p>
                     )}
                 </div>
             )}
